@@ -1,0 +1,26 @@
+
+# Entorno virtual
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Bases de datos locales
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Variables privadas
+.env
+.env.*
+!.env.example
+
+# Archivos locales del editor
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
