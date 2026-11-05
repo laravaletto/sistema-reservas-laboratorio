@@ -3,9 +3,9 @@
 import sys
 from pathlib import Path
 
-from .dominio import ErrorReservas
 from .inventario import cargar_inventario
 from .persistencia import RepositorioSQLite
+from .presentacion import mensaje_error
 from .servicio import ServicioReservas
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -31,8 +31,12 @@ def main() -> int:
         raiz.deiconify()
         raiz.mainloop()
         return 0
-    except (ErrorReservas, tk.TclError) as exc:
-        mensaje = f"No se pudo iniciar el sistema de reservas.\n{exc}"
+    except Exception as exc:
+        detalle = (
+            "No se pudo abrir la interfaz. Comprobá que Python incluya Tkinter y que haya un escritorio disponible."
+            if isinstance(exc, tk.TclError) else mensaje_error(exc).texto
+        )
+        mensaje = f"No se pudo iniciar el sistema de reservas.\n{detalle}"
         print(mensaje, file=sys.stderr)
         if raiz is not None:
             messagebox.showerror("Error de inicio", mensaje, parent=raiz)

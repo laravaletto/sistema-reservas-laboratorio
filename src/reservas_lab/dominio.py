@@ -14,7 +14,9 @@ class ErrorReservas(Exception):
 
 
 class ErrorValidacion(ErrorReservas):
-    pass
+    def __init__(self, mensaje: str, campo: str | None = None):
+        super().__init__(mensaje)
+        self.campo = campo
 
 
 class ConflictoReserva(ErrorReservas):

@@ -27,7 +27,9 @@ Tecnologías: Python, Tkinter, SQLite y pytest.
 - Registrar decisiones en `docs/decisiones.md`, trabajo real en
   `docs/delegacion.md` y `docs/progreso.md`, y verificaciones en
   `docs/verificaciones.md`. No presentar propuestas como resultados ejecutados.
-- La etapa 1 (documentación e inventario) fue revisada y aceptada por la autora, y sus resultados quedaron versionados en Git. En la etapa 2 se autoriza la implementación de la aplicación conforme a docs/especificacion.md, dentro del alcance indicado en cada delegación. No avanzar a etapas posteriores sin revisión y autorización humana.
+- La etapa 1 (documentación e inventario) fue revisada, aceptada y versionada en el commit `b445b3d`. La etapa 2 (implementación de la aplicación, persistencia y pruebas) fue completada, verificada y aceptada por la autora. Sus resultados quedaron versionados en el commit `5c70ae0`.
+Se autoriza la etapa 3 exclusivamente dentro del alcance definido en la próxima delegación. El agente deberá respetar las reglas de negocio existentes, ejecutar las verificaciones correspondientes y detenerse al finalizar para permitir la revisión humana.
+No realizar commits ni push. No avanzar a etapas adicionales sin autorización expresa de la autora.
 
 ## Tecnologías y arquitectura permitidas
 - Python, Tkinter y ttk, SQLite mediante `sqlite3` y pytest.

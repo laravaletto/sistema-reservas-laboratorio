@@ -409,7 +409,7 @@ La advertencia de caché de pytest no fue un fallo de las pruebas. La segunda ej
 
 La autora aceptó la implementación de la segunda delegación. La decisión y sus motivos se registran en [delegacion.md](delegacion.md).
 
-El commit de la etapa 2 permanece pendiente de creación manual. El episodio 3 todavía no se inició.
+Posteriormente, la autora realizó manualmente el commit 5c70ae0 feat: implementar sistema de reservas de laboratorio y publicó los cambios en GitHub. La tercera delegación se inició después de completar y versionar la segunda etapa.
 
 ### Inspección final de archivos y documentación
 
@@ -428,3 +428,148 @@ que se repitió junto con `git diff --check` y la comprobación de especificaci�
 inventario e ignore sin cambios. Todos devolvieron código 0. Git avisó de futuras
 conversiones LF a CRLF; no informó errores de espacios. No se añadieron archivos
 al índice ni se alteró la configuración del repositorio.
+
+## Tercera delegación — 2026-11-05
+
+### Alcance, inspección y protección de evidencia
+
+Esta sección agrega resultados del episodio 3 sin reescribir los registros de
+episodios anteriores. La revisión humana de aquellas etapas no equivale a una
+aceptación de estos cambios. La base existente data/reservas.db se leyó únicamente
+como bytes para calcular su huella; no se abrió con SQLite ni se usó en la GUI.
+
+Se ejecutaron lecturas individuales `Get-Content -LiteralPath <archivo> -Encoding UTF8`
+de AGENTS.md, docs/especificacion.md, interfaz.py, dominio.py, servicio.py,
+__main__.py, docs/delegacion.md, docs/progreso.md y docs/decisiones.md.
+Se usó `-Tail 200` para docs/verificaciones.md y, después de truncarse la salida
+conjunta, `-Tail 40` para decisiones y `-Tail 65` para progreso. Código 0.
+Se utilizó apply_patch para las ediciones; no es un comando de shell.
+
+| Comando ejecutado | Resultado observado |
+|---|---|
+| `git status --short` | Inicialmente sólo AGENTS.md modificado antes de intervenir; no se editó. |
+| `git log -4 --oneline` | 5c70ae0, b445b3d y 3128779. No operaciones remotas. |
+| `rg --files --hidden -g '!.git/**' -g '!.venv/**' -g '!**/__pycache__/**' -g '!.pytest_cache/**'` | Archivos existentes de aplicación, pruebas y documentación. Respeta las exclusiones de Git; no enumera la base ignorada. |
+| `rg -n 'raises\|match=\|def test\|pytest\|testpaths' tests pytest.ini` | Inspección de pruebas y configuración existentes. Las barras de la expresión se escapan sólo para esta tabla. |
+
+Un script inline enviado por here-string de PowerShell a
+`.\.venv\Scripts\python.exe -` registró SHA-256 de AGENTS, README,
+especificación, inventario, persistencia, lector de inventario, requirements-dev,
+pytest.ini y archivos de data/ (incluida la base existente). También registró
+longitud y SHA-256 del texto normalizado de los documentos: episodios 1 y 2 de
+delegación y contenido completo previo de decisiones, progreso y verificaciones.
+Comprobó además que el directorio temporal de la primera corrida aún no existiera.
+La comparación final de esas huellas se registra después de ejecutarla.
+
+### Pruebas automáticas y compilación
+
+| Comando real | Resultado observado |
+|---|---|
+| `.\.venv\Scripts\python.exe -W error -m pytest -q -p no:cacheprovider --basetemp=.venv/pruebas-etapa3-01` | Código 0: **81 passed in 4.18s**, antes de editar código. |
+| `.\.venv\Scripts\python.exe -W error -m pytest -q -p no:cacheprovider --basetemp=.venv/pruebas-etapa3-02` | Código 0: **113 passed in 5.83s**, primera corrida con pruebas de usabilidad. |
+| `.\.venv\Scripts\python.exe -W error -m pytest -q -p no:cacheprovider --basetemp=.venv/pruebas-etapa3-03` | Código 0: **115 passed in 6.22s**, corrida final tras completar los escenarios de lectura posterior fallida y error de Tcl al iniciar. |
+| `.\.venv\Scripts\python.exe -m compileall -q src tests iniciar.py` | Código 0, sin salida; ejecutado antes y después de completar esos casos. |
+| `git diff -- src/reservas_lab/servicio.py src/reservas_lab/dominio.py src/reservas_lab/__main__.py` | Inspección de cambios de diagnóstico y mensajes; sin cambios de condiciones de negocio. |
+| `git diff --check` | Código 0; sólo avisos de futura conversión LF a CRLF, sin errores de espacios. |
+| `git status --short --untracked-files=all` | Módulos editados y nuevos archivos de presentación/pruebas, además de AGENTS.md preexistente. |
+
+Las tres corridas fueron sin ventanas, con advertencias tratadas como errores y
+caché de pytest desactivada. Los directorios temporales nuevos quedan dentro de
+.venv; no se borraron ni reutilizaron bases de la autora. No se instalaron paquetes.
+La suite final incluye las 81 pruebas anteriores y 34 casos nuevos.
+
+test_usabilidad.py usa el servicio real y SQLite temporal con controles simulados;
+no construye Tk. Verifica errores específicos y foco, datos conservados, estilos
+distintos, mensajes sin detalles técnicos, consulta y creación, confirmación
+rechazada/aceptada, estados y selección después de cancelar, fallo de actualización
+sin habilitar cancelaciones y diferenciación entre guardado y lectura posterior
+fallida. Los fallos internos se inducen sólo dentro de pruebas y no son fallos
+encontrados en la base de uso real. No hubo fallos en las suites ejecutadas.
+
+### Comprobación de widgets reales del agente
+
+Se ejecutó un script inline con here-string de PowerShell canalizado a
+`.\.venv\Scripts\python.exe -`. El primer intento falló al analizar el script:
+PowerShell convirtió la ñ del nombre pestañas en ?, produciendo SyntaxError.
+No llegó a iniciar la GUI. Se corrigió sólo el script de comprobación para usar
+un escape Unicode al acceder al atributo; no se cambió el código del producto
+para resolver este problema de codificación de la tubería.
+
+El segundo intento llegó a Tk y falló por `Can't find a usable init.tcl` dentro
+del entorno restringido. Se repitió el script corregido mediante solicitud de
+autorización, con una ventana invisible y SQLite en memoria. Código 0.
+
+La ventana se construyó oculta, se hizo transparente y se mantuvo invisible durante
+la comprobación del recorrido nativo del foco. Se usaron widgets reales, datos
+ficticios y reemplazos de los diálogos sólo en ese proceso para contestar No/Sí.
+No se conectó a la base existente ni se capturaron datos del escritorio.
+
+Salida real de la ejecución autorizada:
+
+```text
+OK: widgets reales, estilos, errores y foco por campo; datos conservados
+OK: orden Tab de ambos formularios, boton deshabilitado fuera del recorrido
+OK: invalidacion al editar/crear/cancelar, confirmacion, estados y seleccion conservada
+OK: mensajes dentro de las tres pestanas a 900x620; ventana invisible, sin inspeccion visual
+Tcl: 8.6.15 Tk: 8.6.15
+```
+
+Se comprobó la geometría de los mensajes respecto de sus pestañas en el tamaño
+mínimo, pero no su apariencia en pantalla. No se simuló una revisión humana ni
+se afirma que la autora haya utilizado las mejoras actuales.
+
+### Verificación humana de la tercera delegación
+
+La autora realizó la revisión funcional y técnica de las mejoras de usabilidad el 2026-11-05, después de finalizar el trabajo de Codex.
+
+**Pruebas automatizadas ejecutadas independientemente:**
+
+Comando:
+
+`./.venv/Scripts/python.exe -m pytest -p no:cacheprovider`
+
+**Resultado:** 115 pruebas aprobadas en 4,83 segundos, sin errores ni advertencias.
+
+**Verificaciones realizadas:**
+
+| Comprobación | Resultado |
+|---|---|
+| Ejecución independiente de pytest | 115 pruebas aprobadas en 4,83 segundos. |
+| Inicio de la aplicación mediante `./.venv/Scripts/python.exe iniciar.py` | Aplicación ejecutada correctamente. |
+| Revisión visual de la interfaz actualizada | Funcionamiento y presentación satisfactorios según la autora. |
+| Mejoras de usabilidad | La autora confirmó que las mejoras funcionan correctamente durante el uso de la aplicación. |
+| Revisión de `dominio.py` y `servicio.py` | Se comprobaron los cambios de identificación de campos de validación, sin alteraciones observadas en las reglas de negocio. |
+
+Durante la primera ejecución del lanzador se produjo un error de Git Bash por caracteres adicionales introducidos al pegar el comando (`[200~`). El comando se ejecutó correctamente en el segundo intento. Este incidente no corresponde a un fallo de la aplicación.
+
+**Decisión humana:** aceptar las mejoras implementadas durante la tercera delegación.
+
+No se identificaron problemas que requieran correcciones adicionales durante las verificaciones realizadas.
+
+El commit de la tercera delegación permanece pendiente de creación manual. El agente no realizó commits ni push.
+
+### Cotejo final de alcance y conservación
+
+Se ejecutó otro script inline con here-string de PowerShell a
+`.\.venv\Scripts\python.exe -`, usando las huellas obtenidas al comenzar.
+Código 0: coincidieron los SHA-256 de la base existente, inventario, persistencia
+(incluido el esquema SQL), README, especificación, AGENTS y dependencias. No se
+agregaron archivos a data/. Coincidió también el texto normalizado previo de
+decisiones, progreso y verificaciones y de los episodios 1 y 2 de delegación.
+
+El mismo script comprobó **48 enlaces locales existentes** y ausencia de espacios
+finales en los archivos Python, y consultó directamente las versiones:
+**Python 3.13.7, SQLite 3.50.4 y pytest 8.4.2**. Tcl/Tk 8.6.15 se había obtenido
+de los widgets reales en la comprobación autorizada anterior.
+
+Se ejecutó además este comando, con código 0 y sin salida:
+
+```powershell
+git diff --exit-code -- README.md docs/especificacion.md data/inventario.json src/reservas_lab/persistencia.py src/reservas_lab/inventario.py requirements-dev.txt pytest.ini tests/test_reglas.py tests/test_persistencia.py tests/test_inventario.py tests/conftest.py
+```
+
+Se repitieron `git diff --check` y `git status --short --untracked-files=all`,
+ambos con código 0. El primero sólo emitió avisos LF/CRLF. El segundo mostró
+los cuatro documentos y cuatro módulos editados, los dos archivos nuevos y la
+modificación preexistente de AGENTS.md, cuyo contenido no cambió durante el trabajo.
+No se ejecutaron git add, commits, push ni operaciones remotas o destructivas.

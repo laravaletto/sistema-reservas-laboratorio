@@ -52,7 +52,8 @@ Las decisiones adicionales DT13–DT15 fueron incorporadas durante la segunda de
 
 Posteriormente, la autora ejecutó independientemente las 81 pruebas, verificó manualmente el funcionamiento de la interfaz y comprobó la persistencia de las reservas después de cerrar y volver a abrir la aplicación.
 
-Decisión humana: aceptar la implementación y las decisiones técnicas de la segunda delegación. El commit correspondiente permanece pendiente de creación manual.
+Decisión humana: aceptar la implementación y las decisiones técnicas de la segunda delegación. Posteriormente, la autora realizó manualmente el commit 5c70ae0 feat: implementar sistema de reservas de laboratorio y publicó los cambios en GitHub.
+
 | ID | Decisión adoptada | Motivo | Alternativas consideradas | Consecuencias |
 |---|---|---|---|---|
 | DT13 | Paquete simple en src/reservas_lab y lanzador iniciar.py; Python 3.10+ por la sintaxis utilizada. | Separar responsabilidades y arrancar sin instalar un paquete ni usar IA. | Instalar un paquete editable agregaría herramientas de construcción innecesarias para esta entrega local. | Rutas calculadas desde __file__, independientes del directorio actual. Se probó Python 3.13.7; otras versiones no se verificaron. |
@@ -68,3 +69,24 @@ El error de Tcl en el entorno restringido se investigó sin modificar la instala
 global ni agregar dependencias: la comprobación autorizada fuera de esa restricción
 inicializó Tcl/Tk 8.6.15. No se incorporaron ajustes de entorno específicos en el
 código de la aplicación. Detalle en [verificaciones.md](verificaciones.md).
+
+## Tercera delegación — 2026-11-05
+
+Se agregan las decisiones de presentación siguientes. Los registros y resultados
+anteriores permanecen intactos. No cambian las reglas, la representación temporal,
+el inventario ni el esquema SQLite; no se agregan dependencias.
+
+| ID | Decisión adoptada | Motivo | Alternativas consideradas | Consecuencias |
+|---|---|---|---|---|
+| DT16 | ErrorValidacion incorpora campo opcional; el servicio agrega contexto Inicio/Fin al error y conserva las validaciones existentes. | La GUI puede señalar el campo correcto sin analizar textos ni validar fechas otra vez. | Inferir el foco buscando palabras en el mensaje es frágil; duplicar validaciones en la GUI contradice la separación establecida. | Mismos criterios y orden de rechazo, con información adicional para presentar el error. Las pruebas anteriores continúan aprobadas. |
+| DT17 | Mensajes seguros centralizados en presentacion.py, avisos persistentes con texto y estilos distintos, y pruebas de acciones sin construir Tk. | Distinguir éxito, error y falta de disponibilidad, conservar entradas y no exponer excepciones técnicas. | Usar sólo colores no comunica el resultado a todos; mostrar str de cualquier excepción expone detalles internos. | Se mantienen los textos seguros de validación; fallos de persistencia, inventario o inesperados reciben explicaciones generales. La confirmación de cancelación continúa siendo modal, con No predeterminado. |
+| DT18 | Conservar selección y marcar la última lectura del historial cuando falla su actualización; deshabilitar cancelación hasta releerlo. | Evitar acciones sobre un listado que la interfaz sabe desactualizado y distinguir un guardado exitoso de una lectura posterior fallida. | Mostrar un historial vacío o anunciar que toda la operación falló daría información incorrecta. | La GUI conserva filas anteriores con aviso, invalida consultas después de cambios y vuelve a intentar la lectura al entrar a Historial. No altera datos ni reglas de cancelación. |
+
+La selección inicial de unidad queda vacía para que sea explícita; el mismo
+servicio rechaza la ausencia de selección. Tab sigue el orden unidad, solicitante
+(al crear), inicio, fin y acción. Ctrl+Tab cambia de pestaña; el inventario de sólo
+lectura y los botones deshabilitados no interrumpen el recorrido. Tras errores se
+enfoca el campo informado y tras crear se selecciona Inicio para facilitar la
+próxima entrada, sin borrar valores. 
+
+La autora revisó y aceptó las mejoras de usabilidad de la tercera delegación el 2026-11-05, después de ejecutar satisfactoriamente la aplicación y las 115 pruebas automatizadas, aprobadas en 4,83 segundos. También revisó los cambios realizados en `dominio.py` y `servicio.py`, comprobando que no se alteraron las reglas de negocio. Los resultados de estas verificaciones se encuentran registrados en [verificaciones.md](verificaciones.md).

@@ -178,7 +178,7 @@ Además, la autora ejecutó independientemente la suite de pruebas automatizadas
 
 Se revisaron los módulos `dominio.py`, `servicio.py` y `persistencia.py`, comprobando su coherencia con las reglas de negocio y la separación de responsabilidades establecida en la especificación.
 
-La aceptación corresponde a la implementación y las verificaciones realizadas hasta esta etapa. El commit y la publicación en GitHub quedan pendientes de ejecución manual.
+La aceptación corresponde a la implementación y las verificaciones realizadas durante la segunda etapa. Posteriormente, la autora realizó manualmente el commit 5c70ae0 y publicó los cambios en GitHub.
 
 ### 6. Motivo de la decisión humana
 
@@ -201,14 +201,104 @@ Se considera cumplido el objetivo de la segunda delegación, sin autorizar todav
 [pruebas de inventario](../tests/test_inventario.py) y
 [comandos/resultados](verificaciones.md).
 
-Commit del episodio 2: pendiente de creación manual. El agente no realizó commits ni operaciones remotas. Episodio 3 sin iniciar.
+Commit del episodio 2: 5c70ae0 feat: implementar sistema de reservas de laboratorio, creado y publicado manualmente por la autora. El agente no realizó commits ni operaciones remotas.
 
-## Episodio 3 — Pendiente
+## Episodio 3 — Mejoras puntuales de usabilidad
 
-1. **Objetivo y requisitos asociados:** pendiente de definir para la etapa autorizada.
-2. **Contexto suministrado:** pendiente de registrar cuando ocurra.
-3. **Extracto de instrucciones utilizadas:** pendiente.
-4. **Acciones o resultados reales del agente:** pendientes; no se realizaron.
-5. **Revisión y decisión humana (aceptar/corregir/rechazar):** pendiente.
-6. **Motivo de la decisión humana:** pendiente.
-7. **Evidencia verificable (archivos, pruebas, resultados o commits):** pendiente.
+Fecha: 2026-11-05. Mejoras de usabilidad implementadas y revisadas por la autora. Decisión humana: aceptar la implementación. Los episodios anteriores se conservan sin cambios.
+
+### 1. Objetivo y requisitos asociados
+
+Mejorar mensajes, formularios, teclado, foco y actualización de la GUI existente.
+Relaciona RF02–RF04 y RF06 con CA02a, CA03a/b, CA04a/b y CA06a/b/c.
+Se mantienen inventario, tres pestañas, reglas, tiempos y esquema SQLite.
+No se incorpora funcionalidad de negocio ni una nueva etapa posterior.
+
+### 2. Contexto suministrado al agente
+
+Prompt de la tercera delegación, AGENTS.md actualizado por la autora,
+especificación, interfaz y módulos de dominio, servicio y entrada, pruebas y
+registros anteriores. Se observó el commit `5c70ae0` de implementación y una
+modificación previa de AGENTS.md, que el agente no editó. La aceptación de la
+etapa 2 consta en ese archivo y en el registro humano anterior; no se deduce una
+aceptación de las mejoras actuales. Había una base existente en data/reservas.db.
+
+### 3. Extracto de instrucciones utilizadas
+
+> Conservar las validaciones de negocio existentes en la capa correspondiente, sin duplicar reglas en la interfaz.
+
+> Evitar que se pierdan innecesariamente los datos ingresados cuando una operación falla.
+
+> Conservar el historial de las delegaciones anteriores. No reescribir ni modificar sus resultados.
+
+> Detenerse al finalizar la implementación y esperar mi revisión y aceptación. No realizar commits ni push.
+
+### 4. Acciones y resultados reales del agente
+
+- Leyó instrucciones, especificación, código y registros; ejecutó la suite inicial:
+  **81 passed in 4.18s**. Registró huellas de la base y archivos protegidos y del
+  contenido histórico de los documentos para cotejarlos al terminar.
+- Agregó el dato opcional campo a ErrorValidacion y contexto Inicio/Fin desde el
+  servicio, sin cambiar las condiciones ni el orden de validación. La GUI no
+  interpreta fechas ni vuelve a comprobar reglas para decidir el foco.
+- Agregó presentacion.py con mensajes seguros, clasificación y alternativas
+  genéricas para fallos internos; aplicó mensajes seguros también al iniciar.
+- Ajustó etiquetas, espaciado, selección explícita de unidad, avisos con texto y
+  color, recorrido de Tab y cambio de pestaña, foco y conservación de los valores.
+- Invalidó consultas al editar sus campos y al crear/cancelar; conservó selección
+  del historial, diferenció ACTIVA/CANCELADA por texto y color y mantuvo confirmación
+  de cancelación con detalles y opción predeterminada No. Si falla la actualización,
+  el listado se identifica como anterior y no permite cancelar hasta releerlo.
+- Creó test_usabilidad.py sin ventanas reales, con servicio/SQLite temporales y
+  controles simulados. Corrida intermedia: **113 passed in 5.83s**. Corrida final,
+  después de completar escenarios de fallos posteriores y de inicio: **115 passed
+  in 6.22s**, incluidas las 81 pruebas anteriores, con advertencias como errores.
+- Compiló los archivos Python. Comprobó widgets reales con ventana invisible y
+  SQLite en memoria: teclado, foco, estilos, confirmación, actualización, datos
+  conservados y mensajes dentro de las tres pestañas a 900x620. Tcl/Tk 8.6.15.
+  La ejecución necesitó autorización fuera del entorno restringido.
+- Documentó los resultados y los dos fallos de preparación del script gráfico
+  (codificación de PowerShell e inicialización de Tcl), sin atribuirlos a la suite.
+  No instaló dependencias ni abrió la base existente desde la aplicación.
+
+### 5. Revisión y decisión humana
+
+**Decisión:** Aceptar las mejoras de usabilidad implementadas durante la tercera delegación, luego de las verificaciones realizadas por la autora.
+
+**Fecha:** 2026-11-05.
+
+La autora ejecutó independientemente la suite de pruebas automatizadas mediante el comando:
+
+`./.venv/Scripts/python.exe -m pytest -p no:cacheprovider`
+
+**Resultado:** 115 pruebas aprobadas en 4,83 segundos, sin errores ni advertencias.
+
+Posteriormente, ejecutó la aplicación mediante `./.venv/Scripts/python.exe iniciar.py` y comprobó satisfactoriamente el funcionamiento de la interfaz actualizada.
+
+La revisión manual permitió confirmar que las mejoras de usabilidad funcionan correctamente y que la aplicación continúa siendo operativa.
+
+Además, se revisaron los cambios realizados en `dominio.py` y `servicio.py`, comprobando que las modificaciones permiten identificar los campos asociados a errores de validación sin alterar las reglas de negocio existentes.
+
+La autora acepta los resultados de la tercera delegación. El commit correspondiente queda pendiente de creación manual.
+
+### 6. Motivo de la decisión humana
+
+Se acepta la implementación porque las mejoras de usabilidad respondieron satisfactoriamente durante la revisión manual de la aplicación.
+
+La ejecución independiente de las 115 pruebas automatizadas confirmó que los casos existentes y las nuevas verificaciones continúan aprobándose.
+
+La revisión de los cambios en los módulos de dominio y servicio permitió comprobar que se mantiene la separación de responsabilidades y que las reglas de negocio no fueron modificadas.
+
+No se identificaron problemas que requieran correcciones adicionales durante las verificaciones realizadas.
+
+Se considera cumplido el objetivo de la tercera delegación.
+
+### 7. Evidencia verificable
+
+[Interfaz](../src/reservas_lab/interfaz.py),
+[mensajes de presentación](../src/reservas_lab/presentacion.py),
+[errores](../src/reservas_lab/dominio.py), [contexto de validación](../src/reservas_lab/servicio.py),
+[entrada](../src/reservas_lab/__main__.py),
+[pruebas nuevas](../tests/test_usabilidad.py) y [comandos y resultados](verificaciones.md).
+
+Commit del episodio 3: pendiente de creación manual. La implementación fue revisada y aceptada por la autora. El agente no realizó commits, push ni operaciones remotas.

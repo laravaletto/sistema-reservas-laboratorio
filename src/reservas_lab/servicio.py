@@ -18,10 +18,16 @@ class ServicioReservas:
 
     def _validar_intervalo(self, unidad_id, inicio, fin):
         if not isinstance(unidad_id, str) or unidad_id not in self._unidades:
-            raise ErrorValidacion("Seleccioná una unidad existente del inventario.")
-        inicio_dt, fin_dt = leer_fecha(inicio), leer_fecha(fin)
+            raise ErrorValidacion("Seleccioná una unidad existente del inventario.", campo="unidad")
+        fechas = []
+        for campo, valor in (("inicio", inicio), ("fin", fin)):
+            try:
+                fechas.append(leer_fecha(valor))
+            except ErrorValidacion as exc:
+                raise ErrorValidacion(f"{campo.capitalize()}: {exc}", campo=campo) from exc
+        inicio_dt, fin_dt = fechas
         if inicio_dt >= fin_dt:
-            raise ErrorValidacion("El inicio debe ser estrictamente anterior al fin.")
+            raise ErrorValidacion("El fin debe ser posterior al inicio. Revisá ambos horarios.", campo="fin")
         return inicio_dt, fin_dt
 
     def disponible(self, unidad_id: str, inicio: str, fin: str) -> bool:
@@ -31,7 +37,7 @@ class ServicioReservas:
     def crear(self, unidad_id: str, solicitante: str, inicio: str, fin: str) -> Reserva:
         inicio_dt, fin_dt = self._validar_intervalo(unidad_id, inicio, fin)
         if not isinstance(solicitante, str) or not solicitante.strip():
-            raise ErrorValidacion("Ingresá un solicitante ficticio que no esté vacío.")
+            raise ErrorValidacion("Ingresá un solicitante ficticio que no esté vacío.", campo="solicitante")
         reserva = Reserva(str(uuid4()), unidad_id, solicitante.strip(), inicio_dt, fin_dt)
         with self._repositorio.transaccion():
             if self._repositorio.hay_conflicto(unidad_id, inicio_dt, fin_dt):
