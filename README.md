@@ -1,16 +1,12 @@
 # Sistema de Reservas de Laboratorio
 
-Trabajo académico individual.
+Trabajo académico individual. Proyecto local desarrollado con apoyo de OpenAI Codex en Visual Studio Code, mediante tres episodios de delegación y verificación humana.
 
-**Estado al 2026-11-05:** etapa 1 revisada y aceptada por la autora, versionada en
-`b445b3d`. Segunda delegación: aplicación y pruebas implementadas; revisión
-funcional humana y commit de esta implementación pendientes.
+**Estado al 2026-11-05:** las tres delegaciones fueron revisadas y aceptadas por la autora. La versión final está publicada en la rama `main`, commit [`91fb0e0`](https://github.com/laravaletto/sistema-reservas-laboratorio/commit/91fb0e0). La última ejecución independiente de la suite finalizó con **115 pruebas aprobadas en 4,83 segundos**. Los procedimientos y resultados están registrados en [verificaciones](docs/verificaciones.md).
 
 ## 1. Especificación breve
 
-El laboratorio registra solicitudes de equipos mediante mensajes y planillas, lo que puede generar superposiciones de reservas y horarios que permanecen bloqueados después de una cancelación.
-
-Se propone desarrollar una aplicación local para administrar reservas de cinco unidades físicas fijas:
+El laboratorio registra solicitudes de equipos mediante mensajes y planillas, lo que puede generar superposiciones de reservas y horarios que permanecen bloqueados después de una cancelación. Se desarrolla una aplicación local para administrar reservas de cinco unidades físicas fijas:
 
 | Identificador | Equipo |
 |---|---|
@@ -24,58 +20,33 @@ Se propone desarrollar una aplicación local para administrar reservas de cinco 
 
 - **RF01 — Inventario:** leer y mostrar las cinco unidades físicas disponibles.
 - **RF02 — Disponibilidad:** consultar si una unidad está disponible en un intervalo determinado.
-- **RF03 — Crear reserva:** registrar una reserva con UUID, solicitante ficticio, fecha y hora de inicio, fecha y hora de fin y estado.
+- **RF03 — Crear reserva:** registrar una reserva con UUID, solicitante ficticio, inicio, fin y estado.
 - **RF04 — Cancelar reserva:** cancelar una reserva sin eliminar sus datos.
 - **RF05 — Persistencia:** conservar las reservas activas y canceladas entre ejecuciones.
 - **RF06 — Historial:** consultar todas las reservas registradas y sus estados.
 
 ### Reglas de negocio
 
-Se rechazan las unidades inexistentes, los solicitantes vacíos, las fechas inválidas y los intervalos cuyo inicio sea igual o posterior al fin.
+Se rechazan las unidades inexistentes, los solicitantes vacíos o compuestos solo por espacios, las fechas inválidas y los intervalos cuyo inicio sea igual o posterior al fin.
 
-Sólo las reservas con estado `ACTIVA` de una misma unidad bloquean disponibilidad.
+Solo las reservas con estado `ACTIVA` de una misma unidad bloquean disponibilidad. Se utilizan intervalos semiabiertos `[inicio, fin)`: existe superposición cuando `inicio_nuevo < fin_existente AND inicio_existente < fin_nuevo`.
 
-Se utilizan intervalos semiabiertos `[inicio, fin)`, considerando que existe superposición cuando:
-
-`inicio_nuevo < fin_existente AND inicio_existente < fin_nuevo`
-
-Las consultas de disponibilidad y la creación de reservas deben utilizar las mismas reglas.
-
-Se permiten reservas consecutivas de una misma unidad y reservas simultáneas de unidades diferentes.
-
-La cancelación libera el intervalo previamente ocupado, pero conserva el registro original en el historial.
+Las consultas de disponibilidad y la creación de reservas usan las mismas reglas. Se permiten reservas consecutivas de una misma unidad y reservas simultáneas de unidades diferentes. La cancelación libera el intervalo, pero conserva la reserva y su identificador en el historial.
 
 ### Supuestos y representación temporal
 
 - Zona horaria de referencia: `America/Argentina/Cordoba`.
-- Formato exacto de entrada: `AAAA-MM-DD HH:MM`.
-- Ejemplo: `2026-11-10 10:30`.
-- Fechas y horas civiles locales, sin conversiones entre zonas horarias.
-- Precisión de minutos.
-- Fechas pasadas permitidas.
-- Sin restricciones adicionales de duración o anticipación.
+- Formato exacto de entrada: `AAAA-MM-DD HH:MM` (por ejemplo, `2026-11-10 10:30`).
+- Fechas y horas civiles locales, sin conversiones entre zonas horarias; precisión de minutos.
+- Fechas pasadas permitidas; sin restricciones adicionales de duración o anticipación.
 - Rango técnico de años: 0001–9999.
-- Identificación de reservas mediante UUID4.
-- Estados posibles: `ACTIVA` y `CANCELADA`.
+- Identificación mediante UUID4; estados `ACTIVA` y `CANCELADA`.
 
 ### Criterios de aceptación
 
-La aplicación deberá:
+La aplicación debe mostrar las cinco unidades, validar entradas, evitar guardar operaciones rechazadas, impedir superposiciones, permitir intervalos consecutivos y reservas de distintas unidades en paralelo, cancelar sin eliminar registros, liberar horarios cancelados, recuperar reservas tras reiniciar y mostrar el historial completo.
 
-- Mostrar correctamente las cinco unidades del inventario.
-- Validar las entradas y evitar guardar operaciones rechazadas.
-- Rechazar reservas superpuestas de una misma unidad.
-- Permitir reservas consecutivas y simultáneas de unidades diferentes.
-- Cancelar reservas sin eliminar sus campos originales.
-- Liberar la disponibilidad después de una cancelación.
-- Recuperar reservas activas y canceladas después de cerrar y reiniciar la aplicación.
-- Mostrar el historial completo de reservas.
-
-La [especificación completa](docs/especificacion.md) contiene los requisitos, las reglas de negocio RN01–RN09, los criterios CA01–CA06c y los casos de prueba previstos CP01–CP18.
-
-La lógica y la persistencia cuentan con pruebas automáticas. Se comprobó la
-interfaz con widgets ocultos; la revisión visual y la aceptación funcional humana
-siguen pendientes. Resultados y límites en [verificaciones](docs/verificaciones.md).
+La [especificación completa](docs/especificacion.md) contiene los requisitos, reglas RN01–RN09, criterios CA01–CA06c y casos previstos CP01–CP18. La evidencia de ejecución y sus límites se encuentran en [verificaciones](docs/verificaciones.md).
 
 ### Fuera de alcance
 
@@ -83,7 +54,7 @@ No se incluyen autenticación, roles reales, notificaciones, pagos, integracione
 
 ## 2. Solución
 
-### Estructura actual del proyecto
+### Estructura del proyecto
 
 ```text
 sistema-reservas-laboratorio/
@@ -107,154 +78,94 @@ sistema-reservas-laboratorio/
 │   ├── dominio.py
 │   ├── inventario.py
 │   ├── persistencia.py
+│   ├── presentacion.py
 │   ├── servicio.py
 │   └── interfaz.py
 └── tests/
     ├── conftest.py
     ├── test_inventario.py
     ├── test_persistencia.py
-    └── test_reglas.py
+    ├── test_reglas.py
+    └── test_usabilidad.py
 ```
 
-Se agregaron `iniciar.py`, `requirements-dev.txt`, `pytest.ini`, el paquete
-`src/reservas_lab/` y `tests/`. La base local se crea en el primer inicio correcto;
-no se distribuye una base con datos de prueba.
+La base local se crea al iniciar correctamente la aplicación; no se distribuye una base con reservas de prueba.
 
 ### Arquitectura y tecnologías
 
-La implementación utiliza:
-
-- **Python:** lenguaje principal de programación.
+- **Python:** lenguaje principal.
 - **Tkinter/ttk:** interfaz gráfica de escritorio.
-- **SQLite mediante `sqlite3`:** persistencia local de reservas.
-- **pytest:** pruebas automáticas de lógica de negocio y persistencia.
+- **SQLite (`sqlite3`):** persistencia local.
+- **pytest:** pruebas automatizadas.
 
-`dominio.py` define datos, errores y fechas; `inventario.py` lee el JSON;
-`servicio.py` valida y coordina los casos de uso; `persistencia.py` ejecuta SQL
-parametrizado y transacciones; `interfaz.py` presenta los formularios y el historial.
-`__main__.py` conecta los componentes y resuelve las rutas desde el archivo del
-paquete. `iniciar.py` permite arrancar sin instalarlo como paquete.
+`dominio.py` define entidades, errores y fechas; `inventario.py` carga el JSON; `servicio.py` valida y coordina los casos de uso; `persistencia.py` administra SQLite mediante SQL parametrizado y transacciones; `presentacion.py` contiene funciones auxiliares de presentación; `interfaz.py` implementa la GUI. `__main__.py` conecta los componentes y `iniciar.py` permite arrancar desde la raíz sin instalar un paquete.
 
-Las pruebas de reglas y persistencia no importan la interfaz ni abren ventanas.
-
-La justificación de las tecnologías, las alternativas consideradas y sus consecuencias están documentadas en [decisiones.md](docs/decisiones.md).
+Las pruebas de reglas y persistencia no requieren abrir ventanas. La justificación de tecnologías, alternativas y consecuencias se documenta en [decisiones](docs/decisiones.md).
 
 ### Requisitos previos, instalación, ejecución y pruebas
 
-Se requiere Python 3.10 o posterior, con Tkinter/ttk y sqlite3. La versión
-comprobada en este entorno es Python 3.13.7; no se probaron otras versiones.
-La aplicación usa sólo la biblioteca estándar. pytest es dependencia de desarrollo.
+Se requiere **Python 3.10 o posterior**, con Tkinter/ttk y `sqlite3`. Se verificó el funcionamiento con Python **3.13.7**; no se probaron otras versiones. En el entorno se observaron Git `2.47.0.windows.2`, SQLite `3.50.4`, Tcl/Tk `8.6.15` y pytest `8.4.2`.
 
-En el entorno de trabajo se observaron:
-
-- Python `3.13.7`.
-- Git `2.47.0.windows.2`.
-
-También se observaron SQLite 3.50.4, Tcl/Tk 8.6.15 y pytest 8.4.2. La
-comprobación de Tk necesitó autorización fuera del entorno restringido del agente;
-esto no es un permiso ni una dependencia de la aplicación para su uso habitual.
-
-Desde la raíz del repositorio, en PowerShell, preparar el entorno de desarrollo:
+La aplicación usa la biblioteca estándar; `pytest` es una dependencia de desarrollo. Desde la raíz del repositorio, en **PowerShell**:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ```
 
-La instalación descarga únicamente herramientas de pruebas y sus dependencias
-en `.venv`; requiere red si no están disponibles localmente. Para usar la
-aplicación no hace falta instalar pytest ni activar el entorno virtual.
+La instalación de dependencias de pruebas puede requerir conexión a Internet. Para utilizar la aplicación no hace falta instalar pytest ni activar el entorno virtual.
 
-Iniciar la aplicación:
+**Iniciar la aplicación:**
 
 ```powershell
 .\.venv\Scripts\python.exe iniciar.py
 ```
 
-También puede usarse `python iniciar.py` con un Python que incluya Tkinter.
-Se puede ejecutar `iniciar.py` por ruta absoluta desde otro directorio: el inventario
-y la base siempre se resuelven dentro del repositorio.
+También se puede ejecutar `python iniciar.py` con una instalación de Python que incluya Tkinter. El inventario y la base se resuelven dentro del repositorio, incluso al ejecutar el iniciador desde otro directorio.
 
-Ejecutar las pruebas sin abrir ventanas:
+**Ejecutar las pruebas:**
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -p no:cacheprovider
 ```
 
-El agente instaló pytest 8.4.2 en `.venv`. Los comandos realmente usados, incluido
-el directorio temporal de pruebas dentro del repositorio, constan en
-[verificaciones.md](docs/verificaciones.md). La aplicación funciona sin Codex,
-ChatGPT, cuentas de IA ni servicios externos; Git/GitHub no son necesarios para ejecutarla.
+Este último comando fue ejecutado independientemente por la autora en la tercera delegación: **115 pruebas aprobadas en 4,83 segundos**. Los comandos del agente, sus resultados y las verificaciones humanas están separados en [verificaciones](docs/verificaciones.md). El sistema funciona sin Codex, ChatGPT, cuentas de IA ni servicios externos.
 
 ### Interfaz gráfica
 
-La interfaz tiene tres pestañas:
+La aplicación cuenta con tres pestañas: **Disponibilidad** (consultar horarios por unidad e intervalo), **Reservas** (consultar el inventario y crear reservas) e **Historial** (ver reservas activas y canceladas y cancelar las activas).
 
-- **Reservas:** visualización del inventario y creación de reservas.
-- **Disponibilidad:** consulta de horarios disponibles por unidad e intervalo.
-- **Historial:** visualización de reservas activas y canceladas, con posibilidad de cancelar reservas activas.
-
-El inventario completo es de sólo lectura y distingue cada unidad por ID y nombre.
-
-La interfaz presenta mensajes ante entradas inválidas, conflictos y operaciones
-exitosas. La confirmación de creación incluye el UUID después de persistir.
-
-La cancelación exige seleccionar una activa y confirmar; conserva el registro.
-El historial incluye ambos estados, ordenados por inicio y UUID, con barras de
-desplazamiento. Crear o cancelar actualiza el listado e invalida el resultado
-previo de disponibilidad para que se vuelva a consultar.
+La interfaz informa errores, conflictos y operaciones exitosas, identifica campos inválidos, mantiene los datos del formulario ante errores y muestra el UUID al crear una reserva. La cancelación requiere confirmación. Tras crear o cancelar, se actualiza el historial y se invalida el resultado anterior de disponibilidad para evitar mostrar información desactualizada.
 
 ### Persistencia y reinicio de datos
 
-El archivo `data/inventario.json` contiene el inventario fijo de las cinco unidades y debe conservarse en Git.
+`data/inventario.json` contiene el inventario fijo y debe conservarse. Las reservas se guardan en **`data/reservas.db`**; el esquema se crea automáticamente si falta, sin reemplazar registros existentes. Se conservan tanto reservas activas como canceladas. La base local está excluida de Git mediante `.gitignore`.
 
-La base es `data/reservas.db`; el esquema se crea si falta, sin reemplazar
-registros. La aplicación guarda activas y canceladas, y reutiliza el mismo archivo
-entre ejecuciones. El agente no creó una base de producción: las verificaciones
-usaron bases temporales y una base en memoria.
+**No hay un botón ni un comando de reinicio de datos.** Si se necesita empezar desde cero, se debe cerrar la aplicación y eliminar manualmente `data/reservas.db`, **solo después de hacer una copia de seguridad si se desea conservar la información**. Esto borra todas las reservas y su historial; al volver a iniciar, se crea una base vacía. No se debe eliminar `data/inventario.json`.
 
-Las bases de datos locales estarán excluidas del control de versiones mediante `.gitignore`.
+Se verificó la persistencia automáticamente y también mediante cierre y reapertura de la aplicación, sin borrar la base, conservando reservas activas y canceladas. El procedimiento y resultado observado constan en [verificaciones](docs/verificaciones.md).
 
-No se implementará un reinicio automático de datos. Cualquier eliminación manual de información existente requerirá autorización y resguardo previo.
+### Ejemplo de entrada y resultado
 
-Durante la preparación documental se retiró un archivo temporal `debug.log`, generado por una consulta de extensiones, mediante una solicitud de aprobación de la herramienta. El incidente se encuentra documentado en [verificaciones.md](docs/verificaciones.md).
+Supongamos una reserva activa de `MIC-01` desde `2026-11-10 10:00` hasta `2026-11-10 11:00`.
 
-La prueba automática de cerrar/reabrir SQLite pasó. La comprobación personal de
-cerrar y reiniciar la aplicación completa sigue pendiente en ese documento.
-
-### Ejemplos de comportamiento esperado
-
-Supongamos que existe una reserva activa de `MIC-01` para el día `2026-11-10`, de `10:00` a `11:00`.
-
-| Nueva solicitud | Resultado esperado | Motivo |
+| Nueva solicitud | Resultado | Motivo |
 |---|---|---|
-| MIC-01, 10:30–11:30 | Rechazar | Se superpone con una reserva activa de la misma unidad. |
-| MIC-01, 11:00–12:00 | Aceptar | Es consecutiva; no existe superposición. |
-| MIC-02, 10:00–11:00 | Aceptar | Corresponde a otra unidad física. |
+| MIC-01, 10:30–11:30 | Rechazada | Superposición con reserva activa |
+| MIC-01, 11:00–12:00 | Aceptada | Intervalo consecutivo |
+| MIC-02, 10:00–11:00 | Aceptada | Otra unidad física |
 
-Si se cancela la reserva original, deberá permanecer en el historial con estado `CANCELADA` y su intervalo quedará disponible.
+Al cancelar la reserva original de MIC-01, sigue visible como `CANCELADA` y su intervalo vuelve a estar disponible. Estos casos fueron cubiertos por pruebas automatizadas y verificados manualmente durante la segunda delegación.
 
-Estos comportamientos tienen cobertura automática en `tests/test_reglas.py`;
-la autora aún debe recorrerlos en la interfaz.
+### Limitaciones y pendientes
 
-### Limitaciones
-
-Se asume una aplicación local con una única zona horaria de referencia.
-
-No se modelan conversiones UTC ni cambios históricos de offset. Los intervalos se comparan utilizando horas civiles locales.
-
-La aplicación está implementada para una instancia local. La comprobación oculta
-de widgets no sustituye revisar tamaño, legibilidad y uso manual en pantalla.
-Si aparece un error de Tcl/Tk al iniciar, comprobar la instalación de Python con
-soporte Tk; no cambiar reglas ni borrar datos para corregir ese problema del entorno.
+La aplicación es local y utiliza una única zona horaria de referencia. No realiza conversiones UTC ni modela cambios históricos de offset; compara fechas y horas civiles locales. No está diseñada para concurrencia distribuida ni escalabilidad de producción. Para ejecutarla es necesario disponer de Python con soporte Tcl/Tk. **No quedan tareas funcionales pendientes dentro del alcance de la consigna.**
 
 ## 3. Preparación del agente
 
 ### Entorno y agente utilizado
 
-La autora preparó el trabajo utilizando:
-
-| Elemento | Configuración |
+| Elemento | Configuración observada |
 |---|---|
 | Entorno de desarrollo | Visual Studio Code |
 | Agente de programación | OpenAI Codex integrado en VS Code |
@@ -264,98 +175,45 @@ La autora preparó el trabajo utilizando:
 | Modalidad | `Work locally` |
 | Permisos de la interfaz | `Ask for approval` |
 
-La selección del modelo, la modalidad y los permisos fue observada e informada por la autora; el agente no verificó directamente estas opciones en la interfaz.
+La selección del modelo, modalidad y permisos fue observada e informada por la autora; el agente no verificó directamente estas opciones en la interfaz. Codex consultó la versión de la extensión, aunque la consulta mostró errores de permisos relacionados con logs. Se distingue esta evidencia de las comprobaciones ejecutadas en [verificaciones](docs/verificaciones.md).
 
-Codex consultó la versión de la extensión y obtuvo el valor indicado, aunque la consulta presentó errores de permisos relacionados con logs.
+### Instrucciones, configuración y adaptación específica
 
-Los comandos ejecutados, los resultados observados y sus limitaciones están registrados en [verificaciones.md](docs/verificaciones.md).
+Se utilizó [AGENTS.md](AGENTS.md), preparado inicialmente por la autora y ampliado para las delegaciones. Las instrucciones establecen respetar las reglas documentadas; compartir la lógica de conflictos entre consulta y creación; permitir intervalos consecutivos; excluir canceladas de los conflictos; preservar los datos al cancelar; separar interfaz, servicio y persistencia; no hacer commits ni push sin autorización; no borrar datos sin aprobación; no modificar archivos ajenos al repositorio; informar archivos y comandos; no inventar verificaciones humanas; y detenerse para revisión al terminar cada episodio.
 
-### Instrucciones específicas del agente
-
-Se utilizó el archivo [AGENTS.md](AGENTS.md), preparado inicialmente por la autora y ampliado posteriormente por Codex.
-
-Las instrucciones establecen:
-
-- Respetar los requisitos y las reglas de negocio documentadas.
-- Compartir la lógica de conflictos entre consulta de disponibilidad y creación de reservas.
-- Permitir reservas consecutivas.
-- Ignorar reservas canceladas al comprobar conflictos.
-- Conservar los datos originales de las reservas canceladas.
-- Mantener separadas la interfaz, la lógica y la persistencia.
-- No realizar commits, push ni operaciones remotas de Git sin autorización explícita.
-- No eliminar archivos, reservas ni bases de datos existentes sin aprobación humana.
-- No modificar archivos fuera del repositorio.
-- Informar los archivos modificados y los comandos ejecutados.
-- No inventar resultados de pruebas ni verificaciones humanas.
-- Detenerse al finalizar cada etapa para permitir la revisión de la autora.
-
-La autora revisó el archivo y comprobó que conserva las restricciones iniciales de control humano.
-
-La segunda delegación agregó pruebas de adyacencia, cancelación que libera el
-intervalo, conservación del historial y coherencia entre consulta y creación.
+**Adaptación comprobable:** la instrucción específica sobre intervalos consecutivos `[inicio, fin)` y reservas canceladas se aplicó en la lógica y fue verificada con pruebas automáticas y recorridos manuales. Las instrucciones y evidencias concretas se vinculan en [delegación](docs/delegacion.md) y [verificaciones](docs/verificaciones.md).
 
 ### Contexto suministrado y excluido
 
-Para el primer episodio de delegación se proporcionaron al agente:
+Se proporcionaron la consigna, los requisitos y reglas, el inventario fijo, los supuestos temporales, los criterios de evaluación, `AGENTS.md` y los documentos del proyecto pertinentes a cada etapa. En el primer episodio se restringió la tarea a documentación e inventario; en el segundo se autorizó implementar la aplicación y las pruebas; en el tercero se autorizaron mejoras de usabilidad sin alterar las reglas ni el esquema de datos.
 
-- La consigna del trabajo académico.
-- Los requisitos y las reglas del sistema de reservas.
-- El inventario de cinco unidades físicas.
-- Los supuestos temporales y las restricciones de alcance.
-- Los criterios de evaluación.
-- Las instrucciones iniciales de `AGENTS.md`.
-- La información del entorno de desarrollo.
-- La indicación de preparar únicamente documentación e inventario, sin implementar la aplicación ni sus pruebas.
+Se excluyeron secretos, credenciales, tokens, datos personales reales, conversaciones privadas completas, proyectos ajenos y archivos externos innecesarios. Los solicitantes utilizados son ficticios.
 
-Se excluyeron credenciales, tokens, secretos, datos personales reales, conversaciones privadas completas, proyectos ajenos y archivos externos innecesarios.
+### Herramientas, permisos y revisión humana
 
-### Control y revisión humana
-
-La autora conserva el control sobre la aceptación de los cambios, las autorizaciones de operaciones restringidas, la ejecución independiente de pruebas y los commits.
-
-Durante el primer episodio, Codex preparó la documentación y se detuvo antes de implementar el sistema.
-
-Posteriormente, la autora revisó los archivos generados y registró la aceptación documental del episodio.
-
-Esta aceptación no constituye una verificación funcional de la aplicación.
-
-La etapa 1 quedó versionada en `b445b3d`, observado por el agente. La revisión
-humana y la incorporación manual de la segunda delegación siguen pendientes.
+Codex trabajó sobre archivos locales del repositorio y ejecutó comandos y pruebas con las herramientas disponibles en el entorno. Las operaciones restringidas requirieron aprobación cuando correspondió; los commits y push fueron realizados por la autora. La autora revisó los cambios antes de aceptarlos, ejecutó pruebas de forma independiente y verificó manualmente la GUI, las reglas principales y la persistencia. Los comandos, resultados, autorizaciones y límites observados se detallan en [verificaciones](docs/verificaciones.md).
 
 ## 4. Registro de decisiones y delegación
 
-La evolución del proyecto se documenta mediante los siguientes archivos:
+Los documentos versionados permiten reconstruir la evolución del proyecto:
 
-- [Decisiones técnicas](docs/decisiones.md): tecnologías, arquitectura, reglas de disponibilidad, representación temporal, UUID y conservación del historial.
-- [Registro de delegación](docs/delegacion.md): episodio 1 aceptado y versionado; episodio 2 implementado, pendiente de revisión; episodio 3 no iniciado.
-- [Progreso del proyecto](docs/progreso.md): trabajo realizado, revisión humana y etapas pendientes.
-- [Registro de verificaciones](docs/verificaciones.md): comandos y resultados reales del agente, revisiones documentales de la autora y verificaciones funcionales humanas pendientes.
+- [Decisiones técnicas](docs/decisiones.md): elecciones, motivos, alternativas y consecuencias.
+- [Registro de delegación](docs/delegacion.md): objetivos, contexto, extractos de instrucciones, resultados, decisiones humanas y evidencias de los tres episodios.
+- [Progreso del proyecto](docs/progreso.md): avance, aceptación y estado final.
+- [Registro de verificaciones](docs/verificaciones.md): comandos y procedimientos, versiones, resultados del agente y comprobaciones independientes de la autora.
 
-### Estado del control de versiones
+### Episodios reales de delegación
 
-Antes de la primera delegación se registró el commit inicial:
+| Episodio | Objetivo y resultado | Decisión humana | Evidencia versionada |
+|---|---|---|---|
+| 1 | Preparar especificación, instrucciones, inventario y trazabilidad | Revisado y aceptado | [`b445b3d`](https://github.com/laravaletto/sistema-reservas-laboratorio/commit/b445b3d) |
+| 2 | Implementar lógica, SQLite, interfaz y pruebas; 81 pruebas aprobadas | Pruebas independientes, recorrido manual y aceptación | [`5c70ae0`](https://github.com/laravaletto/sistema-reservas-laboratorio/commit/5c70ae0) |
+| 3 | Mejorar mensajes, validaciones visuales y usabilidad; 115 pruebas aprobadas | Revisión de cambios, ejecución independiente y aceptación | [`91fb0e0`](https://github.com/laravaletto/sistema-reservas-laboratorio/commit/91fb0e0) |
 
-`3128779 chore: inicializar repositorio`
+Para cada episodio, [delegacion.md](docs/delegacion.md) relaciona el requisito, el contexto suministrado, las instrucciones utilizadas, las acciones del agente, la decisión humana y las pruebas o archivos verificables. Las correcciones y limitaciones se registraron cuando ocurrieron; no se inventaron fallas.
 
-Ese commit es anterior al trabajo documental de Codex y no incluye los archivos generados durante el primer episodio.
+### Control de versiones y entrega
 
-Durante la delegación, el agente no realizó commits, push ni operaciones remotas de Git.
+El commit inicial fue [`3128779`](https://github.com/laravaletto/sistema-reservas-laboratorio/commit/3128779). Los tres episodios se versionaron después de la revisión humana. El agente no realizó commits ni push; la autora los efectuó manualmente.
 
-La autora realizó la revisión documental del primer episodio y registró su decisión de aceptación.
-
-El commit `b445b3d docs: agregar especificacion y preparacion del agente` contiene
-la etapa 1. La segunda delegación fue autorizada por la autora el 2026-11-05.
-El agente no realizó commits ni operaciones remotas; el commit de implementación
-y su aceptación humana permanecen pendientes.
-
-### Episodios de delegación
-
-| Episodio | Objetivo | Estado |
-|---|---|---|
-| 1 | Preparar especificación, instrucciones del agente, inventario y documentación de trazabilidad. | Aceptado; versionado en b445b3d. |
-| 2 | Implementar lógica, SQLite, GUI y pruebas de esta delegación. | Implementado y verificado por el agente; revisión humana pendiente. |
-| 3 | Implementación o verificación complementaria según el alcance que autorice la autora. | No iniciado. |
-
-Los episodios posteriores se documentarán con sus instrucciones, resultados reales, verificaciones, decisiones humanas y evidencia de Git.
-
-La aplicación deberá desarrollarse y verificarse de forma progresiva, manteniendo la correspondencia entre requisitos, decisiones técnicas, código y pruebas.
+**Versión funcional aceptada:** rama `main`, commit `91fb0e0`. Si se realiza un commit posterior para actualizar este README, ese commit solo modifica documentación y no sustituye la evidencia funcional de `91fb0e0`.
