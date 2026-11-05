@@ -27,9 +27,7 @@ Tecnologías: Python, Tkinter, SQLite y pytest.
 - Registrar decisiones en `docs/decisiones.md`, trabajo real en
   `docs/delegacion.md` y `docs/progreso.md`, y verificaciones en
   `docs/verificaciones.md`. No presentar propuestas como resultados ejecutados.
-- En la etapa 1 crear solamente la documentación solicitada y
-  `data/inventario.json`. No implementar aplicación ni pruebas, instalar
-  dependencias o avanzar a la etapa siguiente sin revisión humana.
+- La etapa 1 (documentación e inventario) fue revisada y aceptada por la autora, y sus resultados quedaron versionados en Git. En la etapa 2 se autoriza la implementación de la aplicación conforme a docs/especificacion.md, dentro del alcance indicado en cada delegación. No avanzar a etapas posteriores sin revisión y autorización humana.
 
 ## Tecnologías y arquitectura permitidas
 - Python, Tkinter y ttk, SQLite mediante `sqlite3` y pytest.

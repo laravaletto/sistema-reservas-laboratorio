@@ -6,9 +6,18 @@
 
 La autora revisó y aceptó documentalmente el inventario, la especificación, `AGENTS.md`, el registro de delegación, las verificaciones y las decisiones técnicas.
 
-La revisión de los documentos restantes y la incorporación manual de los cambios a Git continúan pendientes.
+La autora informó al autorizar la segunda delegación que completó la revisión,
+aceptación y versionado de la etapa 1. El agente comprobó el commit `b445b3d`.
 
-El sistema todavía no está implementado y no se han ejecutado pruebas funcionales. La aceptación documental no implica la verificación del funcionamiento de la aplicación.
+**Etapa 2:** lógica de negocio, persistencia SQLite, interfaz Tkinter/ttk y pruebas automatizadas implementadas.
+
+Codex ejecutó satisfactoriamente 81 pruebas en 3,76 segundos, con advertencias tratadas como errores, y realizó una comprobación de la interfaz con widgets ocultos.
+
+Posteriormente, la autora ejecutó independientemente las 81 pruebas automatizadas y verificó manualmente la interfaz, la creación de reservas, la detección de superposiciones, los horarios consecutivos, la cancelación y la persistencia después de cerrar y reabrir la aplicación.
+
+**Decisión humana:** aceptar la implementación de la segunda delegación.
+
+El commit de esta etapa permanece pendiente. Los resultados completos se encuentran en [verificaciones.md](verificaciones.md).
 
 ## Trabajo realizado
 
@@ -41,7 +50,7 @@ Se documentaron las siguientes decisiones para orientar la futura implementació
 
 Los motivos, las alternativas consideradas y las consecuencias de estas decisiones se encuentran en [decisiones.md](decisiones.md).
 
-Estas decisiones fueron revisadas documentalmente por la autora. Su implementación y comportamiento deberán verificarse en etapas posteriores.
+Estas decisiones fueron revisadas documentalmente durante la primera etapa. En la segunda delegación se implementaron y se verificaron mediante pruebas automatizadas y comprobaciones funcionales realizadas por la autora, según el alcance registrado en verificaciones.md.
 
 ## Cambios de alcance o especificación
 
@@ -64,37 +73,53 @@ No se agregaron restricciones de horarios hábiles, duración máxima, anticipac
 
 ## Etapas y tareas pendientes
 
+
 | Etapa o tarea | Estado |
 |---|---|
-| 1. Generar especificación, preparación y documentación | Realizada por el agente el 2026-11-04. |
-| Revisar archivos y supuestos; aceptar, corregir o rechazar | En curso. Revisados inventario, especificación, `AGENTS.md`, delegación, verificaciones y decisiones técnicas. |
-| Incorporar evidencia de la etapa 1 a Git | Pendiente de commit manual. El agente no realizó commits. |
-| 2. Implementar lógica, persistencia y pruebas según el alcance autorizado | No iniciada. Episodio 2 pendiente. |
-| 3. Implementar o verificar la interfaz y ejecución reproducible según el alcance autorizado | No iniciada. Episodio 3 pendiente. |
-| Ejecutar pytest y pruebas de persistencia con bases temporales | No realizado. Todavía no existen código ni pruebas. |
-| Verificación humana de interfaz y reinicio completo | Pendiente. No hay aplicación ejecutable. |
-| Registrar decisiones humanas y commits reales de cada episodio | Decisión documental del episodio 1 registrada; commit pendiente. Episodios 2 y 3 pendientes. |
+| 1. Generar especificación, preparación y documentación | Completada y aceptada. |
+| Revisar documentos de etapa 1 | Completado por la autora. |
+| Incorporar evidencia de etapa 1 a Git | Versionada en `b445b3d`. |
+| 2. Implementar lógica, persistencia, GUI y pruebas | Completada por Codex y aceptada por la autora. |
+| Ejecutar pytest y pruebas de persistencia | 81 pruebas aprobadas por Codex y posteriormente por la autora. |
+| Verificación humana de interfaz y reinicio completo | Completada satisfactoriamente el 2026-11-05. |
+| Decisión humana del episodio 2 | Aceptar la implementación. |
+| Commit del episodio 2 | Pendiente de creación manual. |
+| 3. Nueva delegación | No iniciada; pendiente de definición y autorización. |
 
-La división futura de las etapas 2 y 3 es orientativa. No constituye una delegación ya realizada ni una autorización para iniciarlas.
+La segunda delegación autorizó también la GUI, por lo que se implementó aquí.
+El episodio 3 continúa pendiente de definición y autorización; no se avanzó a él.
 
 La autora definirá los objetivos, el alcance y las instrucciones de cada nueva delegación antes de continuar.
 
 ## Próximos pasos
 
-La autora continuará con la revisión de `docs/progreso.md` y `README.md`, completará los registros de las verificaciones humanas y realizará manualmente el commit correspondiente a la primera etapa.
+La autora completará la revisión de la documentación actualizada y realizará manualmente el commit de la segunda delegación.
 
-Una vez registrada la evidencia en Git, podrá autorizar una nueva delegación para implementar el sistema, respetando los requisitos y las decisiones técnicas documentadas.
-
-El agente permanece detenido hasta recibir una nueva instrucción.
+Posteriormente, definirá el objetivo y el alcance del tercer episodio de delegación, que no podrá comenzar sin autorización humana.
 
 ## Estado general
 
-- **Preparación documental del agente:** finalizada.
-- **Revisión humana:** en curso, con aceptación documental de los archivos revisados.
-- **Implementación del sistema:** pendiente.
-- **Pruebas automáticas:** pendientes.
-- **Verificación funcional humana:** pendiente.
-- **Commit de la primera delegación:** pendiente.
-- **Episodios de delegación 2 y 3:** no iniciados.
+- **Preparación documental:** finalizada y aceptada.
+- **Revisión humana de la etapa 1:** completada.
+- **Implementación del sistema:** realizada en la segunda delegación.
+- **Pruebas automatizadas:** 81 casos aprobados por Codex y por la autora.
+- **Verificación funcional humana:** completada satisfactoriamente.
+- **Persistencia entre ejecuciones:** comprobada manualmente.
+- **Commit de la primera delegación:** `b445b3d`.
+- **Episodio 2:** implementado, revisado y aceptado; commit pendiente.
+- **Episodio 3:** no iniciado.
+
+## Archivos y alcance de la segunda delegación
+
+Se agregaron iniciar.py, requirements-dev.txt, pytest.ini, src/reservas_lab/
+(__init__, __main__, dominio, inventario, persistencia, servicio e interfaz) y
+tests/ (conftest y pruebas de reglas, persistencia e inventario).
+Se actualizaron README y decisiones, delegación, progreso y verificaciones.
+La modificación previa de AGENTS.md se conservó sin editarla. No se modificaron
+la especificación, el JSON ni .gitignore. .venv es local y no versionable.
+
+Sin cambios a los requisitos: se concretaron DT13–DT15 sobre organización,
+transacciones y entorno de pruebas. Se implementó el esquema SQLite al iniciar,
+sin migraciones destructivas, servicios externos ni dependencias de ejecución.
 
 La documentación de esta etapa constituye la base para desarrollar el sistema de reservas y permite conservar la trazabilidad entre requisitos, decisiones, implementación y verificaciones posteriores.

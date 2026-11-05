@@ -4,7 +4,9 @@ Fecha de inicio: 2026-11-04. Última actualización documental: 2026-11-05.
 
 Este registro distingue lo observado mediante herramientas del agente, lo informado por la autora y las verificaciones realizadas personalmente por ella.
 
-Los resultados de la etapa 1 corresponden exclusivamente a la preparación documental. No contienen resultados de pruebas funcionales de la aplicación, ya que todavía no existen código ni pruebas implementadas.
+Los resultados de la etapa 1 corresponden exclusivamente a la preparación documental:
+en ese momento no había código ni pruebas. Los resultados reales de implementación
+y pruebas de la segunda delegación se agregan al final, sin sustituir la evidencia histórica.
 
 ## Información del entorno y procedencia
 
@@ -194,7 +196,7 @@ No se modificó `.gitignore` para ocultar el archivo.
 
 No se ejecutó `git add`, no se realizaron commits ni se publicaron cambios.
 
-## Pruebas de aplicación ejecutadas por el agente
+## Pruebas de aplicación ejecutadas por el agente — etapa 1
 
 **Ninguna.**
 
@@ -257,7 +259,7 @@ La prueba automática de persistencia mediante reapertura de SQLite no reemplaza
 - La revisión documental de la autora no sustituye las pruebas funcionales posteriores.
 - Permanecen pendientes la revisión de los demás documentos y el commit manual del primer episodio.
 
-## Estado de la etapa 1
+## Estado de la etapa 1 al preparar el registro documental
 
 **Trabajo del agente:** finalizado.
 
@@ -270,3 +272,159 @@ La prueba automática de persistencia mediante reapertura de SQLite no reemplaza
 **Commit del episodio:** pendiente de creación manual.
 
 La siguiente etapa sólo comenzará después de completar la revisión humana y registrar el avance mediante Git.
+
+## Segunda delegación — 2026-11-05
+
+### Punto de partida y alcance real
+
+La autora informó que revisó, aceptó y versionó la etapa 1. El agente observó
+`b445b3d docs: agregar especificacion y preparacion del agente` y
+`3128779 chore: inicializar repositorio`. El estado inicial sólo mostraba una
+modificación de AGENTS.md hecha previamente; el agente la conservó sin editarlo.
+Las referencias anteriores a tareas pendientes de etapa 1 son históricas.
+
+Se implementaron siete módulos en src/reservas_lab, iniciar.py, pytest.ini,
+requirements-dev.txt y cuatro archivos en tests/. Se actualizan únicamente
+README.md, decisiones.md, delegacion.md, progreso.md y este registro.
+No se modifican especificación, inventario ni .gitignore. No se crea una base de
+producción; las pruebas usan bases temporales o en memoria, con datos ficticios.
+
+### Comandos de inspección y preparación ejecutados
+
+Las lecturas fueron individuales con `Get-Content -LiteralPath <archivo> -Encoding UTF8`
+para AGENTS.md, docs/especificacion.md, README.md, docs/decisiones.md,
+docs/delegacion.md, docs/progreso.md, docs/verificaciones.md y data/inventario.json.
+Se repitieron las lecturas de decisiones, delegación y progreso porque la salida
+conjunta anterior había sido truncada. Todas esas lecturas devolvieron código 0.
+`apply_patch` se utilizó para las ediciones; no es un comando de shell.
+
+| Comando real | Resultado observado |
+|---|---|
+| `rg --files --hidden -g '!.git/**'` | Se encontraron instrucciones, README, cinco documentos, JSON e ignore, sin aplicación ni tests. |
+| `git status --short` | Sólo AGENTS.md ya modificado antes de intervenir. |
+| `git log -5 --oneline` | b445b3d y 3128779; no operaciones remotas. |
+| `python -m pytest --version` | Código 1: No module named pytest en Python global. |
+| `python -m venv .venv` | Código 0; entorno local preparado. |
+| `.\.venv\Scripts\python.exe -m pip install --no-cache-dir pytest==8.4.2` | Primer intento con código 1: conexión bloqueada, WinError 10013; no se pudo consultar el índice. Se repitió mediante solicitud de autorización de red y terminó con código 0, pytest 8.4.2 instalado dentro de .venv. |
+| `Get-Item -LiteralPath 'C:\Users\Windows\AppData\Local\Programs\Python\Python313\tcl\tcl8.6\init.tcl'` | Código 0; archivo de Tcl existente. Sólo lectura para diagnosticar el entorno. |
+
+Comando de versiones inicial:
+
+```powershell
+python -c "import sys, sqlite3, tkinter; print(sys.version); print('SQLite:', sqlite3.sqlite_version); print('Tcl:', tkinter.Tcl().eval('info patchlevel')); print('Tk declarado por tkinter:', tkinter.TkVersion)"
+```
+
+Devolvió Python 3.13.7 y SQLite 3.50.4, y código 1 al intentar inicializar Tcl
+(`Can't find a usable init.tcl`). Se repitió en el entorno virtual:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import sqlite3, tkinter; print('SQLite:', sqlite3.sqlite_version); print('Tcl:', tkinter.Tcl().eval('info patchlevel')); print('Tk declarado:', tkinter.TkVersion)"
+```
+
+También devolvió código 1 por Tcl. El archivo existente no bastó para inicializar
+Tcl dentro del entorno restringido; la comprobación autorizada fuera de él sí
+pasó, como se detalla abajo. No se reparó ni modificó la instalación global.
+
+### Pruebas y comprobaciones ejecutadas por el agente
+
+| Comando real | Resultado observado |
+|---|---|
+| `.\.venv\Scripts\python.exe -m pytest -q --basetemp=.venv/pruebas-etapa2-01` | Código 0: **81 passed in 3.47s**. Bases nuevas dentro de .venv; sin ventanas. |
+| `.\.venv\Scripts\python.exe -m compileall -q src tests iniciar.py` | Código 0, sin salida; ejecutado antes y después del ajuste de cierre de conexiones de pruebas. |
+| `.\.venv\Scripts\python.exe -W error -m pytest -q --basetemp=.venv/pruebas-etapa2-02` | Código 0: **81 passed in 3.76s**, advertencias tratadas como errores. Corrida final tras cerrar explícitamente conexiones auxiliares en tests. |
+| `.\.venv\Scripts\python.exe -m pip check` | Código 0: No broken requirements found. |
+| `.\.venv\Scripts\python.exe -m pip list --format=freeze` | Código 0: colorama 0.4.6, iniconfig 2.3.1, packaging 26.3, pip 25.2, pluggy 1.7.0, Pygments 2.21.0 y pytest 8.4.2. |
+| `git diff --check` | Código 0; avisos de conversión futura LF a CRLF en documentos editados, sin errores de espacios. No se cambió la configuración Git. |
+| `git status --short --untracked-files=all` | Código 0; archivos nuevos y documentos editados, más la modificación previa de AGENTS.md. No hay commit de implementación. |
+| `git diff --exit-code -- docs/especificacion.md data/inventario.json .gitignore` | Código 0, sin salida; los tres archivos permanecen intactos. |
+
+La primera instalación falló por red; no fue un fallo de una prueba del sistema.
+No hubo fallos en las dos corridas de pytest. Las excepciones de escritura y
+commit inducidas en tests son escenarios esperados con rollback comprobado,
+no errores encontrados en datos de uso real. No se usó data/reservas.db.
+
+### Correspondencia con los casos previstos
+
+| Casos | Evidencia automática |
+|---|---|
+| CP01, CP18 (inventario) | tests/test_inventario.py: unidades exactas, lectura sin cambios, contenido inválido/ausente y rutas independientes del directorio actual. |
+| CP02–CP12, CP14, CP15 | tests/test_reglas.py: validaciones, matriz de superposiciones, ambos extremos consecutivos, unidades distintas, UUID, cancelación, repetición, pasado, cruces de día y rango 0001–9999. |
+| CP13, CP16, CP18 (base) | tests/test_persistencia.py: reapertura con ambos estados, conflicto posterior a consulta, rollback ante fallos de inserción/cancelación/commit, base inaccesible o inválida sin reemplazar contenido y parámetros SQL. |
+| CP17 | Orden y estados del historial en test_reglas.py; selección/cancelación y actualización en la comprobación gráfica oculta. Revisión visual humana realizada el 2026-11-05; resultado satisfactorio. |
+
+La reapertura automática de SQLite conservó UUID, unidad, solicitante, inicio,
+fin y estado de dos reservas, una cancelada y otra activa. Después de reabrir,
+la cancelada no bloqueó y la activa sí. Es evidencia de RF05 a nivel de persistencia;
+no se presenta como reinicio manual completo de la GUI.
+
+### Comprobación gráfica del agente con ventana oculta
+
+Se envió un script inline mediante here-string de PowerShell a
+`.\.venv\Scripts\python.exe -`, con solicitud de autorización porque Tcl no
+inicializaba dentro del entorno restringido. Devolvió código 0.
+
+Procedimiento ejecutado: crear Tk y ocultarlo, abrir SQLite en memoria, cargar el
+JSON y construir Aplicacion. Se reemplazaron sólo en ese proceso los diálogos por
+funciones que registraban mensajes y aceptaban la confirmación de cancelación.
+El script comprobó el historial vacío, creó una reserva ficticia, consultó su
+superposición, intentó duplicarla (error sin inserción), seleccionó la activa,
+comprobó el botón habilitado, la canceló, comprobó el estado y botón deshabilitado,
+y volvió a consultar el intervalo libre. Finalmente ejecutó el punto de entrada
+con base en memoria, mantuvo la ventana oculta y cerró el bucle con un evento programado.
+
+Salida observada:
+
+```text
+OK: widgets ocultos, creacion, conflicto, consulta, cancelacion e historial
+Tcl: 8.6.15
+Tk: 8.6.15
+OK: punto de entrada, bucle grafico y cierre sin errores; sin base de produccion
+```
+
+Esto comprueba construcción y acciones de widgets reales. No comprueba
+legibilidad, composición visual, interacción personal con los diálogos ni el
+reinicio completo contra una base en disco de la aplicación real. No se atribuye
+ninguna de esas verificaciones a la autora ni se agregan pruebas GUI a la suite
+que debe correr sin ventanas.
+
+### Verificación humana de la segunda delegación
+
+La autora realizó pruebas funcionales de la aplicación y ejecutó independientemente la suite automatizada el 2026-11-05, después de finalizar el trabajo de Codex.
+
+| Fecha | Persona | Procedimiento | Resultado / decisión |
+|---|---|---|---|
+| 2026-11-05 | Autora | Ejecutar `./.venv/Scripts/python.exe -m pytest` desde Git Bash. | 81 pruebas aprobadas en 3,33 segundos. Se presentó una advertencia `PytestCacheWarning` por permisos de escritura en `.pytest_cache`. |
+| 2026-11-05 | Autora | Ejecutar `./.venv/Scripts/python.exe -m pytest -p no:cacheprovider`. | 81 pruebas aprobadas en 3,31 segundos, sin advertencias. |
+| 2026-11-05 | Autora | Iniciar la aplicación mediante `./.venv/Scripts/python.exe iniciar.py` e inspeccionar sus pestañas. | La interfaz abrió correctamente y mostró las cinco unidades del inventario, Reservas, Disponibilidad e Historial. |
+| 2026-11-05 | Autora | Crear una reserva para MIC-01 de 10:00 a 11:00 e intentar otra de 10:30 a 11:30 del mismo día. | Se creó la primera reserva y se rechazó la segunda por superposición. |
+| 2026-11-05 | Autora | Crear una segunda reserva para MIC-01 de 11:00 a 12:00. | Se permitió la reserva consecutiva y ambas aparecieron activas en el historial. |
+| 2026-11-05 | Autora | Consultar disponibilidad de MIC-01 de 10:30 a 11:30. | Se informó correctamente que el intervalo no estaba disponible. |
+| 2026-11-05 | Autora | Cancelar la reserva de 10:00 a 11:00 y consultar nuevamente ese intervalo. | La reserva permaneció en el historial como CANCELADA y el intervalo quedó disponible. La reserva de 11:00 a 12:00 continuó activa. |
+| 2026-11-05 | Autora | Cerrar y volver a abrir la aplicación. | Las dos reservas permanecieron registradas con sus estados correspondientes, confirmando persistencia entre ejecuciones. |
+| 2026-11-05 | Autora | Revisar `dominio.py`, `servicio.py` y `persistencia.py`. | Se comprobó la coherencia de las validaciones, reglas de negocio, consultas SQL y transacciones. No se identificaron correcciones necesarias. |
+
+Las reservas utilizadas contenían datos ficticios y correspondían al 2026-11-10.
+
+La advertencia de caché de pytest no fue un fallo de las pruebas. La segunda ejecución confirmó que la suite podía completarse sin advertencias al desactivar el proveedor de caché.
+
+La autora aceptó la implementación de la segunda delegación. La decisión y sus motivos se registran en [delegacion.md](delegacion.md).
+
+El commit de la etapa 2 permanece pendiente de creación manual. El episodio 3 todavía no se inició.
+
+### Inspección final de archivos y documentación
+
+Un segundo script inline enviado mediante here-string a
+`.\.venv\Scripts\python.exe -` enumeró iniciar.py, pytest.ini,
+requirements-dev.txt y los .py de src/ y tests/, validó UTF-8 y ausencia de espacios
+finales, resolvió los enlaces Markdown del README y docs/ y comprobó data/.
+Código 0: **14 archivos nuevos comprobados, 40 enlaces locales existentes y sólo
+inventario.json en data/**. No se abrió una base de producción.
+
+Se ejecutaron también `git diff --stat` y `git diff -- AGENTS.md`, ambos con
+código 0: el primero mostró cinco documentos editados por el agente y AGENTS.md;
+el segundo mostró únicamente la autorización de etapa 2 ya presente al comenzar.
+Los 14 archivos nuevos aparecen en `git status --short --untracked-files=all`,
+que se repitió junto con `git diff --check` y la comprobación de especificación,
+inventario e ignore sin cambios. Todos devolvieron código 0. Git avisó de futuras
+conversiones LF a CRLF; no informó errores de espacios. No se añadieron archivos
+al índice ni se alteró la configuración del repositorio.

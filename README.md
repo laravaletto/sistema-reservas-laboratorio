@@ -2,9 +2,9 @@
 
 Trabajo académico individual.
 
-**Estado al 2026-11-05:** Etapa 1 de preparación documental e inventario realizada por el agente. La autora completó la revisión documental de los archivos generados y registró su decisión de aceptación. La incorporación manual de los cambios a Git continúa pendiente.
-
-**La aplicación y sus pruebas funcionales todavía no están implementadas.**
+**Estado al 2026-11-05:** etapa 1 revisada y aceptada por la autora, versionada en
+`b445b3d`. Segunda delegación: aplicación y pruebas implementadas; revisión
+funcional humana y commit de esta implementación pendientes.
 
 ## 1. Especificación breve
 
@@ -73,7 +73,9 @@ La aplicación deberá:
 
 La [especificación completa](docs/especificacion.md) contiene los requisitos, las reglas de negocio RN01–RN09, los criterios CA01–CA06c y los casos de prueba previstos CP01–CP18.
 
-Estos criterios todavía no fueron verificados mediante una implementación funcional.
+La lógica y la persistencia cuentan con pruebas automáticas. Se comprobó la
+interfaz con widgets ocultos; la revisión visual y la aceptación funcional humana
+siguen pendientes. Resultados y límites en [verificaciones](docs/verificaciones.md).
 
 ### Fuera de alcance
 
@@ -88,75 +90,128 @@ sistema-reservas-laboratorio/
 ├── .gitignore
 ├── AGENTS.md
 ├── README.md
+├── iniciar.py
+├── pytest.ini
+├── requirements-dev.txt
 ├── data/
 │   └── inventario.json
-└── docs/
-    ├── especificacion.md
-    ├── decisiones.md
-    ├── delegacion.md
-    ├── progreso.md
-    └── verificaciones.md
+├── docs/
+│   ├── especificacion.md
+│   ├── decisiones.md
+│   ├── delegacion.md
+│   ├── progreso.md
+│   └── verificaciones.md
+├── src/reservas_lab/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── dominio.py
+│   ├── inventario.py
+│   ├── persistencia.py
+│   ├── servicio.py
+│   └── interfaz.py
+└── tests/
+    ├── conftest.py
+    ├── test_inventario.py
+    ├── test_persistencia.py
+    └── test_reglas.py
 ```
 
-La estructura corresponde a la etapa de preparación documental. Los directorios `src/` y `tests/` todavía no existen.
+Se agregaron `iniciar.py`, `requirements-dev.txt`, `pytest.ini`, el paquete
+`src/reservas_lab/` y `tests/`. La base local se crea en el primer inicio correcto;
+no se distribuye una base con datos de prueba.
 
-### Arquitectura y tecnologías previstas
+### Arquitectura y tecnologías
 
-La implementación utilizará:
+La implementación utiliza:
 
 - **Python:** lenguaje principal de programación.
 - **Tkinter/ttk:** interfaz gráfica de escritorio.
 - **SQLite mediante `sqlite3`:** persistencia local de reservas.
 - **pytest:** pruebas automáticas de lógica de negocio y persistencia.
 
-Se mantendrá una separación entre interfaz gráfica, lógica de negocio y acceso a datos.
+`dominio.py` define datos, errores y fechas; `inventario.py` lee el JSON;
+`servicio.py` valida y coordina los casos de uso; `persistencia.py` ejecuta SQL
+parametrizado y transacciones; `interfaz.py` presenta los formularios y el historial.
+`__main__.py` conecta los componentes y resuelve las rutas desde el archivo del
+paquete. `iniciar.py` permite arrancar sin instalarlo como paquete.
 
-La lógica de validación y detección de conflictos deberá poder probarse sin abrir ventanas.
+Las pruebas de reglas y persistencia no importan la interfaz ni abren ventanas.
 
 La justificación de las tecnologías, las alternativas consideradas y sus consecuencias están documentadas en [decisiones.md](docs/decisiones.md).
 
 ### Requisitos previos, instalación, ejecución y pruebas
 
-Se necesitará una instalación de Python con soporte para Tkinter/ttk y SQLite. pytest se utilizará como dependencia de desarrollo.
+Se requiere Python 3.10 o posterior, con Tkinter/ttk y sqlite3. La versión
+comprobada en este entorno es Python 3.13.7; no se probaron otras versiones.
+La aplicación usa sólo la biblioteca estándar. pytest es dependencia de desarrollo.
 
 En el entorno de trabajo se observaron:
 
 - Python `3.13.7`.
 - Git `2.47.0.windows.2`.
 
-Estas versiones corresponden al entorno actual y no constituyen todavía una versión mínima validada para ejecutar la aplicación.
+También se observaron SQLite 3.50.4, Tcl/Tk 8.6.15 y pytest 8.4.2. La
+comprobación de Tk necesitó autorización fuera del entorno restringido del agente;
+esto no es un permiso ni una dependencia de la aplicación para su uso habitual.
 
-La disponibilidad de Tkinter y las versiones de SQLite y pytest aún no fueron verificadas durante esta etapa.
+Desde la raíz del repositorio, en PowerShell, preparar el entorno de desarrollo:
 
-**Pendiente de implementación:** definir la versión mínima compatible, las dependencias de desarrollo, el punto de entrada y los comandos reproducibles de instalación, ejecución y pruebas.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
 
-Actualmente no existe un comando para iniciar la aplicación ni una suite de pruebas implementada.
+La instalación descarga únicamente herramientas de pruebas y sus dependencias
+en `.venv`; requiere red si no están disponibles localmente. Para usar la
+aplicación no hace falta instalar pytest ni activar el entorno virtual.
 
-Durante esta etapa, **el agente no instaló dependencias**.
+Iniciar la aplicación:
 
-La solución final deberá poder ejecutarse sin Codex, ChatGPT, una cuenta de IA ni servicios externos. Git y GitHub se utilizarán para registrar la evolución del proyecto, pero no serán necesarios para el funcionamiento de la aplicación.
+```powershell
+.\.venv\Scripts\python.exe iniciar.py
+```
 
-### Interfaz gráfica prevista
+También puede usarse `python iniciar.py` con un Python que incluya Tkinter.
+Se puede ejecutar `iniciar.py` por ruta absoluta desde otro directorio: el inventario
+y la base siempre se resuelven dentro del repositorio.
 
-Se propone una interfaz con tres pestañas:
+Ejecutar las pruebas sin abrir ventanas:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+El agente instaló pytest 8.4.2 en `.venv`. Los comandos realmente usados, incluido
+el directorio temporal de pruebas dentro del repositorio, constan en
+[verificaciones.md](docs/verificaciones.md). La aplicación funciona sin Codex,
+ChatGPT, cuentas de IA ni servicios externos; Git/GitHub no son necesarios para ejecutarla.
+
+### Interfaz gráfica
+
+La interfaz tiene tres pestañas:
 
 - **Reservas:** visualización del inventario y creación de reservas.
 - **Disponibilidad:** consulta de horarios disponibles por unidad e intervalo.
 - **Historial:** visualización de reservas activas y canceladas, con posibilidad de cancelar reservas activas.
 
-El inventario será de sólo lectura.
+El inventario completo es de sólo lectura y distingue cada unidad por ID y nombre.
 
-La interfaz deberá presentar mensajes claros ante entradas inválidas, conflictos de disponibilidad y operaciones exitosas.
+La interfaz presenta mensajes ante entradas inválidas, conflictos y operaciones
+exitosas. La confirmación de creación incluye el UUID después de persistir.
 
-Las cancelaciones requerirán confirmación para evitar operaciones accidentales.
+La cancelación exige seleccionar una activa y confirmar; conserva el registro.
+El historial incluye ambos estados, ordenados por inicio y UUID, con barras de
+desplazamiento. Crear o cancelar actualiza el listado e invalida el resultado
+previo de disponibilidad para que se vuelva a consultar.
 
 ### Persistencia y reinicio de datos
 
 El archivo `data/inventario.json` contiene el inventario fijo de las cinco unidades y debe conservarse en Git.
 
-La base de datos prevista será `data/reservas.db`, que todavía no existe.
-
-SQLite almacenará las reservas activas y canceladas, conservando sus datos entre ejecuciones.
+La base es `data/reservas.db`; el esquema se crea si falta, sin reemplazar
+registros. La aplicación guarda activas y canceladas, y reutiliza el mismo archivo
+entre ejecuciones. El agente no creó una base de producción: las verificaciones
+usaron bases temporales y una base en memoria.
 
 Las bases de datos locales estarán excluidas del control de versiones mediante `.gitignore`.
 
@@ -164,7 +219,8 @@ No se implementará un reinicio automático de datos. Cualquier eliminación man
 
 Durante la preparación documental se retiró un archivo temporal `debug.log`, generado por una consulta de extensiones, mediante una solicitud de aprobación de la herramienta. El incidente se encuentra documentado en [verificaciones.md](docs/verificaciones.md).
 
-El procedimiento de comprobación de persistencia después de cerrar y volver a abrir la aplicación está previsto en ese mismo documento y todavía no fue ejecutado.
+La prueba automática de cerrar/reabrir SQLite pasó. La comprobación personal de
+cerrar y reiniciar la aplicación completa sigue pendiente en ese documento.
 
 ### Ejemplos de comportamiento esperado
 
@@ -178,7 +234,8 @@ Supongamos que existe una reserva activa de `MIC-01` para el día `2026-11-10`, 
 
 Si se cancela la reserva original, deberá permanecer en el historial con estado `CANCELADA` y su intervalo quedará disponible.
 
-Estos ejemplos describen criterios de aceptación y **no corresponden a pruebas ejecutadas**.
+Estos comportamientos tienen cobertura automática en `tests/test_reglas.py`;
+la autora aún debe recorrerlos en la interfaz.
 
 ### Limitaciones
 
@@ -186,7 +243,10 @@ Se asume una aplicación local con una única zona horaria de referencia.
 
 No se modelan conversiones UTC ni cambios históricos de offset. Los intervalos se comparan utilizando horas civiles locales.
 
-La interfaz gráfica, la persistencia y el comportamiento funcional todavía no pueden evaluarse porque la aplicación no está implementada.
+La aplicación está implementada para una instancia local. La comprobación oculta
+de widgets no sustituye revisar tamaño, legibilidad y uso manual en pantalla.
+Si aparece un error de Tcl/Tk al iniciar, comprobar la instalación de Python con
+soporte Tk; no cambiar reglas ni borrar datos para corregir ese problema del entorno.
 
 ## 3. Preparación del agente
 
@@ -231,7 +291,8 @@ Las instrucciones establecen:
 
 La autora revisó el archivo y comprobó que conserva las restricciones iniciales de control humano.
 
-Las reglas de implementación todavía deberán verificarse mediante código y pruebas.
+La segunda delegación agregó pruebas de adyacencia, cancelación que libera el
+intervalo, conservación del historial y coherencia entre consulta y creación.
 
 ### Contexto suministrado y excluido
 
@@ -258,16 +319,17 @@ Posteriormente, la autora revisó los archivos generados y registró la aceptaci
 
 Esta aceptación no constituye una verificación funcional de la aplicación.
 
-La incorporación de los cambios a Git se realizará manualmente, después de completar la revisión.
+La etapa 1 quedó versionada en `b445b3d`, observado por el agente. La revisión
+humana y la incorporación manual de la segunda delegación siguen pendientes.
 
 ## 4. Registro de decisiones y delegación
 
 La evolución del proyecto se documenta mediante los siguientes archivos:
 
 - [Decisiones técnicas](docs/decisiones.md): tecnologías, arquitectura, reglas de disponibilidad, representación temporal, UUID y conservación del historial.
-- [Registro de delegación](docs/delegacion.md): primer episodio documental registrado y revisado por la autora, con decisión de aceptación. Commit pendiente; episodios 2 y 3 todavía no iniciados.
+- [Registro de delegación](docs/delegacion.md): episodio 1 aceptado y versionado; episodio 2 implementado, pendiente de revisión; episodio 3 no iniciado.
 - [Progreso del proyecto](docs/progreso.md): trabajo realizado, revisión humana y etapas pendientes.
-- [Registro de verificaciones](docs/verificaciones.md): comandos y resultados informados por el agente, procedencia de la información del entorno, revisiones documentales realizadas por la autora y pruebas funcionales y de persistencia pendientes.
+- [Registro de verificaciones](docs/verificaciones.md): comandos y resultados reales del agente, revisiones documentales de la autora y verificaciones funcionales humanas pendientes.
 
 ### Estado del control de versiones
 
@@ -281,18 +343,17 @@ Durante la delegación, el agente no realizó commits, push ni operaciones remot
 
 La autora realizó la revisión documental del primer episodio y registró su decisión de aceptación.
 
-**La incorporación manual de los archivos a Git continúa pendiente.**
-
-Antes de autorizar la implementación, se completará el versionado de esta etapa y se conservará la evidencia correspondiente.
-
-Los identificadores y enlaces a commits se incorporarán a la documentación cuando existan.
+El commit `b445b3d docs: agregar especificacion y preparacion del agente` contiene
+la etapa 1. La segunda delegación fue autorizada por la autora el 2026-11-05.
+El agente no realizó commits ni operaciones remotas; el commit de implementación
+y su aceptación humana permanecen pendientes.
 
 ### Episodios de delegación
 
 | Episodio | Objetivo | Estado |
 |---|---|---|
-| 1 | Preparar especificación, instrucciones del agente, inventario y documentación de trazabilidad. | Trabajo del agente finalizado y aceptado documentalmente; commit pendiente. |
-| 2 | Implementación de funcionalidades según el alcance que autorice la autora. | No iniciado. |
+| 1 | Preparar especificación, instrucciones del agente, inventario y documentación de trazabilidad. | Aceptado; versionado en b445b3d. |
+| 2 | Implementar lógica, SQLite, GUI y pruebas de esta delegación. | Implementado y verificado por el agente; revisión humana pendiente. |
 | 3 | Implementación o verificación complementaria según el alcance que autorice la autora. | No iniciado. |
 
 Los episodios posteriores se documentarán con sus instrucciones, resultados reales, verificaciones, decisiones humanas y evidencia de Git.

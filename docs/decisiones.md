@@ -5,7 +5,7 @@
 
 Las decisiones técnicas fueron documentadas inicialmente por el agente a partir de la consigna y revisadas posteriormente por la autora.
 
-La aceptación corresponde al diseño y las decisiones documentadas, no a una implementación funcional. Las tecnologías, reglas y mecanismos propuestos deberán comprobarse durante las etapas de implementación y pruebas.
+La primera revisión humana correspondió al diseño y las decisiones documentadas. Posteriormente, durante la segunda delegación, se implementaron las funcionalidades previstas y se verificaron mediante pruebas automatizadas y comprobaciones manuales realizadas por la autora, quien aceptó la implementación el 2026-11-05.
 
 ## Decisiones técnicas
 
@@ -28,7 +28,7 @@ La aceptación corresponde al diseño y las decisiones documentadas, no a una im
 
 Las decisiones DT01–DT12 constituyen la base documental de la primera etapa.
 
-La revisión humana confirmó su coherencia con los requisitos y el alcance previstos. Esto no implica que las funcionalidades, pruebas o mecanismos de persistencia ya se encuentren implementados.
+La revisión humana de la primera etapa confirmó la coherencia de las decisiones con los requisitos y el alcance previstos. En la segunda delegación se implementaron las decisiones técnicas correspondientes y se verificó su funcionamiento mediante 81 pruebas automatizadas y comprobaciones manuales de la interfaz, las reservas, la disponibilidad, la cancelación y la persistencia.
 
 Si durante el desarrollo surge la necesidad de modificar una decisión, deberá registrarse:
 
@@ -43,3 +43,28 @@ Si durante el desarrollo surge la necesidad de modificar una decisión, deberá 
 Los cambios significativos deberán reflejarse también en `docs/especificacion.md` y `docs/progreso.md`, conservando su evolución mediante Git.
 
 No se atribuirán aprobaciones, verificaciones ni resultados a la autora sin que hayan ocurrido efectivamente.
+
+## Segunda delegación — 2026-11-05
+
+Se implementaron DT01–DT11 sin cambiar los requisitos ni la representación civil del tiempo. La autora informó que aceptó y versionó la etapa 1; el agente observó el commit b445b3d.
+
+Las decisiones adicionales DT13–DT15 fueron incorporadas durante la segunda delegación. Codex ejecutó satisfactoriamente 81 pruebas automatizadas y comprobaciones de la interfaz con widgets ocultos.
+
+Posteriormente, la autora ejecutó independientemente las 81 pruebas, verificó manualmente el funcionamiento de la interfaz y comprobó la persistencia de las reservas después de cerrar y volver a abrir la aplicación.
+
+Decisión humana: aceptar la implementación y las decisiones técnicas de la segunda delegación. El commit correspondiente permanece pendiente de creación manual.
+| ID | Decisión adoptada | Motivo | Alternativas consideradas | Consecuencias |
+|---|---|---|---|---|
+| DT13 | Paquete simple en src/reservas_lab y lanzador iniciar.py; Python 3.10+ por la sintaxis utilizada. | Separar responsabilidades y arrancar sin instalar un paquete ni usar IA. | Instalar un paquete editable agregaría herramientas de construcción innecesarias para esta entrega local. | Rutas calculadas desde __file__, independientes del directorio actual. Se probó Python 3.13.7; otras versiones no se verificaron. |
+| DT14 | Una consulta SQL de conflictos compartida, con BEGIN IMMEDIATE al crear o cancelar. | Revalidar el conflicto al guardar y confirmar éxito sólo después del commit; garantizar rollback ante errores. | Consultar sólo antes de abrir la transacción dejaría una separación entre comprobar e insertar. | El servicio valida unidad/intervalo en ambos flujos y solicitante al crear. SQLite aplica restricciones de campos, unidades y estados. No se agregan servicios ni concurrencia distribuida. |
+| DT15 | pytest 8.4.2 en requirements-dev.txt, bases temporales y fallos controlados en pruebas. | Ejecución reproducible y comprobación real de reapertura y rollback sin ventanas ni datos de uso. | Pruebas contra data/reservas.db arriesgarían mezclar datos ficticios con registros de la autora. | Pruebas independientes de Tk; tests de inserción, cancelación y commit fallidos. El entorno .venv y sus bases de prueba no se versionan. La aplicación no depende de pytest. |
+
+En la interfaz se confirma la creación con UUID y se invalida el resultado anterior
+de disponibilidad después de crear/cancelar. El historial se actualiza y sólo
+habilita cancelar cuando se selecciona una ACTIVA. Se conserva el diseño de tres
+pestañas y el inventario visible de sólo lectura.
+
+El error de Tcl en el entorno restringido se investigó sin modificar la instalación
+global ni agregar dependencias: la comprobación autorizada fuera de esa restricción
+inicializó Tcl/Tk 8.6.15. No se incorporaron ajustes de entorno específicos en el
+código de la aplicación. Detalle en [verificaciones.md](verificaciones.md).
